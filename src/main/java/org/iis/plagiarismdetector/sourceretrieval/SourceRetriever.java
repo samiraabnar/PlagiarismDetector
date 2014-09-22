@@ -357,7 +357,7 @@ public abstract class SourceRetriever {
         });
         queryResult.subList(0, Math.min(queryResult.size(), SourceRetrievalConfig.getK()));
         System.out.println(suspFileName + ": " + queryResult.size());
-        reportInTREC(queryResult, suspFileName);
+        reportInTREC(queryResult, suspFileName.substring(suspFileName.indexOf("-")+1));
         getFinalResults().put(suspFileName, queryResult);
         return queryResult;
     }

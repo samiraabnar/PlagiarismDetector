@@ -15,7 +15,7 @@ public class SourceRetrievalConfig {
 
 	static {
 		try {
-			File cConf = new File("sourceRetrievalConfig.properties");
+			File cConf = new File("sourceRetrievalConfig_DCQ.properties");
 			System.out.println("Config File:"+ cConf.getAbsolutePath());
 			InputStream stream = new FileInputStream(cConf);
 			configFile.load(stream);
