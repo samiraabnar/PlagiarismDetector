@@ -15,6 +15,8 @@ import com.sun.tools.javac.util.Pair;
 
 import edu.stanford.nlp.ling.HasWord;
 import edu.stanford.nlp.process.DocumentPreprocessor;
+import java.io.ByteArrayInputStream;
+import java.io.InputStreamReader;
 
 public class DocumentSentenceAsQuery extends DocumentAsQuery{
 	public static void main(String[] args) {
@@ -103,7 +105,7 @@ public class DocumentSentenceAsQuery extends DocumentAsQuery{
 		List<String> sentences = new ArrayList<String>();
 		
   	  String sentenceString = "";
-		DocumentPreprocessor dp = new DocumentPreprocessor(SourceRetrievalConfig.getSuspCorpusPath()+suspFileName+".txt");
+		DocumentPreprocessor dp = new DocumentPreprocessor(new InputStreamReader( new ByteArrayInputStream(suspFileText.getBytes())));
 	      for (List<HasWord> sentence : dp) {
 	    	  for(int i = 0; i< sentence.size(); i++)
 	    		  sentenceString += " "+sentence.get(i);

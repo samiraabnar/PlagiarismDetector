@@ -463,12 +463,7 @@ public class LMBasedSourceRetrieval extends SourceRetriever {
 		return chunksNGrams;
 	}
 
-	@Override
-	protected List<QueryResult> mergeDifferentQueriesResults(
-			Map<String, List<QueryResult>> results) {
-		// TODO Auto-generated method stub
-		return null;
-	}
+	
 
 	@Override
 	protected List<Pair<String, String>> extractQueries(String suspFileName,

@@ -85,19 +85,19 @@ public class MyAnalyzer {
 			
 			@Override
 			protected Analyzer getWrappedAnalyzer(String string) {
-				return new StandardAnalyzer(Version.LUCENE_CURRENT);
+				return new SimpleAnalyzer(Version.LUCENE_CURRENT);
 			}
 
 			@Override
 			protected Analyzer.TokenStreamComponents wrapComponents(
 					String fieldName, Analyzer.TokenStreamComponents tsc) {
-				TokenStream tokenStream = new WordDelimiterFilter( new StandardFilter(
-						Version.LUCENE_CURRENT, tsc.getTokenStream()), wordDelimiterConfig, null);
+                                TokenStream tokenStream
+				 = new WordDelimiterFilter( tsc.getTokenStream(), wordDelimiterConfig, null);
 
 				tokenStream = new LowerCaseFilter(Version.LUCENE_CURRENT,
 						tokenStream);
 			
-				return new StandardAnalyzer.TokenStreamComponents(
+				return new SimpleAnalyzer.TokenStreamComponents(
 						tsc.getTokenizer(), tokenStream);
 			}
 			
@@ -115,7 +115,7 @@ public class MyAnalyzer {
 			
 			@Override
 			protected Analyzer getWrappedAnalyzer(String string) {
-				return new StandardAnalyzer(Version.LUCENE_CURRENT);
+				return new SimpleAnalyzer(Version.LUCENE_CURRENT);
 			}
 
 			@Override
@@ -127,7 +127,7 @@ public class MyAnalyzer {
 				tokenStream = new LowerCaseFilter(Version.LUCENE_CURRENT,
 						tokenStream);
 			
-				return new StandardAnalyzer.TokenStreamComponents(
+				return new SimpleAnalyzer.TokenStreamComponents(
 						tsc.getTokenizer(), tokenStream);
 			}
 			

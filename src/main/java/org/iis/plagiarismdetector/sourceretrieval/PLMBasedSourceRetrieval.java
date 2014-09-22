@@ -17,7 +17,6 @@ import javax.xml.parsers.ParserConfigurationException;
 
 import org.apache.lucene.queryparser.classic.ParseException;
 import org.xml.sax.SAXException;
-import org.iis.plagiarismdetector.settings.PARAMETER;
 import  org.iis.plagiarismdetector.textalignment.ngrams.NGramExtractor;
 import org.iis.plagiarismdetector.textalignment.ngrams.NGramFeature;
 import  org.iis.plagiarismdetector.textalignment.ngrams.NGramType;
@@ -25,14 +24,11 @@ import org.iis.plagiarismdetector.classifiers.PlagiarismTypeDetector;
 
 import com.sun.tools.javac.util.Pair;
 
-import org.iis.plagiarismdetector.core.JudgementFileFormat;
-import org.iis.plagiarismdetector.core.SimilarityFunction;
 import org.iis.plagiarismdetector.core.TextProcessor;
 import  org.iis.plagiarismdetector.core.lm.DirichletSmoothedLanguageModelbyLM;
 import  org.iis.plagiarismdetector.core.lm.LanguageModel;
 import  org.iis.plagiarismdetector.core.lm.LuceneBasedLanguageModel;
 import  org.iis.plagiarismdetector.core.lm.NotSmoothedLanguageModel;
-import org.iis.plagiarismdetector.core.sourceretrieval.EvaluationSummary;
 import org.iis.plagiarismdetector.core.sourceretrieval.QueryResult;
 import org.iis.plagiarismdetector.core.sourceretrieval.SourceRetrievalConfig;
 import org.iis.plagiarismdetector.core.sourceretrieval.irengine.LuceneIndex;
@@ -178,7 +174,7 @@ public class PLMBasedSourceRetrieval extends LMBasedSourceRetrieval {
 				return name.endsWith(".txt") && (!name.startsWith("."));
 			}
 		})) {
-			String documentText = TextProcessor.getMatn(suspFile).toLowerCase();
+			String documentText = suspIndexInfo.getIndexReader().document(suspDocIndexedIdMap.get(suspFile.getName().replaceAll(".txt", ""))).get("TEXT");//TextProcessor.getMatn(suspFile).toLowerCase();
 			retrieveSources(documentText, suspFile.getName());
 		}
 	}
@@ -540,13 +536,6 @@ public class PLMBasedSourceRetrieval extends LMBasedSourceRetrieval {
 		}
 
 		return chunksNGrams;
-	}
-
-	@Override
-	protected List<QueryResult> mergeDifferentQueriesResults(
-			Map<String, List<QueryResult>> results) {
-		// TODO Auto-generated method stub
-		return null;
 	}
 
 	@Override
