@@ -9,6 +9,8 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -102,9 +104,6 @@ public abstract class SourceRetriever {
 			String experimentDescription, boolean reIndex) throws Exception {
 		try {
 		
-
-			if (reIndex)
-				new Indexer(SourceRetrievalConfig.getSrcIndexPath(),SourceRetrievalConfig.getSrcCorpusPath());
 			initialize(SourceRetrievalConfig.getSrcIndexPath());
 			retrieve(expNo, experimentOptions, experimentDescription);
 
@@ -132,24 +131,9 @@ public abstract class SourceRetriever {
 				return !arg0.getName().startsWith(".");
 			}
 		})) {
-			Map<String, List<QueryResult>> results = processSuspDocument(f
+			processSuspDocument(f
 					.getPath());
-			List<QueryResult> finalResultsPerSuspDoc = mergeDifferentQueriesResults(results);
-
-			String suspFileName = f.getName().contains("/") ? f.getName()
-					.substring(f.getName().lastIndexOf("/") + 1)
-					.replace(".txt", "") : f.getName().replace(".txt", "");
-			getFinalResults().put(suspFileName, finalResultsPerSuspDoc);
-
-			reportInTREC(finalResultsPerSuspDoc, suspFileName);
 		}
-		EvaluationSummary evalSummary = evaluateResults(getFinalResults(),
-				(String) experimentOptions.get("JUDGEMENTS_PATH"),
-				JudgementFileFormat.Pairs);
-		evalSummary.setExperimentNumber(expNo.toString());
-		evalSummary.setExperimentDescription(experimentDescription);
-		evalSummary.setExperimentOptions(experimentOptions);
-		System.out.println(evalSummary);
 	}
 
 	protected void reportInTREC(List<QueryResult> finalResultsPerSuspDoc,
@@ -306,7 +290,7 @@ public abstract class SourceRetriever {
 		return (TP / (TP + FP));
 	}
 
-	public Map<String, List<QueryResult>> processSuspDocument(
+	public List<QueryResult> processSuspDocument(
 			String suspFilePath) throws Exception {
 		String suspFileText = TextProcessor.getMatn(new File(suspFilePath));
 		String suspFileName = suspFilePath.contains("/") ? suspFilePath
@@ -314,14 +298,86 @@ public abstract class SourceRetriever {
 						"") : suspFilePath.replace(".txt", "");
 		List<Pair<String, String>> queries = extractQueries(suspFileName,
 				suspFileText);
-		Map<String, List<QueryResult>> results = new HashMap<String, List<QueryResult>>();
+		Map<String, QueryResult> qrMap = new HashMap<String, QueryResult>();
 		for (Pair<String, String> query : queries) {
-			if (!results.containsKey(query.snd))
-				results.put(query.snd, new ArrayList<QueryResult>());
-			results.get(query.snd).addAll(submitQuery(query.fst, query.snd,SourceRetrievalConfig.getK()));
-		}
-		return results;
+			List<Pair<Object, Double>> queryResult = getResultsPerQuery(query);
+			
+			for (int k = 0; k < queryResult.size(); k++) {
+				String docRealId = ((QueryResult)queryResult.get(k).fst).getDocumentId();
+				if (qrMap
+						.containsKey(docRealId)) {
+				
+					qrMap.put(
+							docRealId,
+							new QueryResult(
+									suspFileName,
+									docRealId,
+									SourceRetrievalConfig.getK()
+											- k
+											+ qrMap.get(
+													docRealId)
+													.getScore(), query.snd,
+									k, ((QueryResult)queryResult.get(k).fst).getIndexedDocId() ));
+				} else {
+					qrMap.put(
+							docRealId,
+							new QueryResult(
+									suspFileName,
+									docRealId,
+									(double) (SourceRetrievalConfig.getK()
+											- k), query.snd,
+									k, ((QueryResult)queryResult.get(k).fst).getIndexedDocId() ));
+				}
+			}
 
+		}
+		
+		List<QueryResult> queryResult = new ArrayList<QueryResult>(
+				qrMap.values());
+
+		Collections.sort(queryResult, new Comparator<QueryResult>() {
+
+			@Override
+			public int compare(QueryResult o1, QueryResult o2) {
+				return o2.getScore().compareTo(o1.getScore());
+			}
+
+		});
+		queryResult.subList(0, Math.min(queryResult.size(),SourceRetrievalConfig.getK()));
+		System.out.println(suspFileName + ": " + queryResult.size());
+		reportInTREC(queryResult, suspFileName);
+		getFinalResults().put(suspFileName, queryResult);
+		return queryResult;
+	}
+
+	private List<Pair<Object, Double>> getResultsPerQuery(Pair<String, String> query)
+			throws IOException, ParseException {
+		List<QueryResult> resultPerQ = submitQuery(query.fst, query.snd,SourceRetrievalConfig.getK());
+		
+		List<Pair<Object,Double>> similarityScores = new ArrayList<Pair<Object,Double>>();
+		for (QueryResult resDoc : resultPerQ/* sourceLMz.keySet() */) {
+			
+			similarityScores .add(new Pair<Object, Double>(resDoc.getDocumentId(),
+					resDoc.getScore()));
+		}
+
+		Collections.sort(similarityScores,
+				new Comparator<Pair<Object, Double>>() {
+
+					@Override
+					public int compare(Pair<Object, Double> o1,
+							Pair<Object, Double> o2) {
+						return o2.snd.compareTo(o1.snd);
+					}
+				});
+
+		if (similarityScores.size() == 0)
+			return similarityScores;
+		int index = getIndexOfMaxDiff(similarityScores);
+		if (index > 5)
+			index = 0;
+		
+		return similarityScores.subList(0, index);
 	}
 
 	abstract protected List<QueryResult> mergeDifferentQueriesResults(
@@ -337,8 +393,42 @@ public abstract class SourceRetriever {
 		List<QueryResult> results = new ArrayList<QueryResult>();
 
 		results = retriever.searchAndReturnResults(query, queryId,k);
+		
 		return results;
 	}
+	
+	public Integer getIndexOfMaxDiff(List<Pair<Object, Double>> list) {
+		Integer indx1 = 0, indx2 = 0, indx3 = 0, indx4 = 0;
+		Double diff1 = 0D, diff2 = 0D, diff3 = 0D, diff4 = 0D;
+		for (int i = 0; i < (list.size() - 1); i++) {
+			Double tmpDiff1 = (list.get(i).snd - list.get(i + 1).snd)
+					/ list.get(i).snd;
+			Double tmpDiff2 = (list.get(i).snd) / list.get(i + 1).snd;
+			Double tmpDiff3 = (list.get(i).snd - list.get(i + 1).snd)
+					/ list.get(i + 1).snd;
+			Double tmpDiff4 = (list.get(i).snd - list.get(i + 1).snd);
+
+			if (tmpDiff1 > diff1) {
+				diff1 = tmpDiff1;
+				indx1 = i;
+			}
+			if (tmpDiff2 > diff2) {
+				diff2 = tmpDiff2;
+				indx2 = i;
+			}
+			if (tmpDiff3 > diff3) {
+				diff3 = tmpDiff3;
+				indx3 = i;
+			}
+			if (tmpDiff4 > diff4) {
+				diff4 = tmpDiff4;
+				indx4 = i;
+			}
+		}
+
+		return Math.min(Math.min(indx1, indx2), Math.min(indx3, indx4)) + 1;
+	}
+
 
 	public Map<String, List<QueryResult>> getFinalResults() {
 		return FinalResults;

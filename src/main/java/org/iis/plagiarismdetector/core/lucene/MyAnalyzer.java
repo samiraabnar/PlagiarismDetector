@@ -46,6 +46,35 @@ public class MyAnalyzer {
 		this.steming = steming;
 	}
 	
+	public Analyzer MyDefaultAnalyzer()
+	{
+		
+		return new AnalyzerWrapper() {
+			
+			
+			
+			@Override
+			protected Analyzer getWrappedAnalyzer(String string) {
+				return new StandardAnalyzer(Version.LUCENE_CURRENT);
+			}
+
+			@Override
+			protected Analyzer.TokenStreamComponents wrapComponents(
+					String fieldName, Analyzer.TokenStreamComponents tsc) {
+				TokenStream tokenStream =  new StandardFilter(
+						Version.LUCENE_CURRENT, tsc.getTokenStream());
+
+				tokenStream = new LowerCaseFilter(Version.LUCENE_CURRENT,
+						tokenStream);
+			
+				return new StandardAnalyzer.TokenStreamComponents(
+						tsc.getTokenizer(), tokenStream);
+			}
+			
+		};
+	}
+
+	
 	public Analyzer MyNamedEntityAnalyzer()
 	{
 		

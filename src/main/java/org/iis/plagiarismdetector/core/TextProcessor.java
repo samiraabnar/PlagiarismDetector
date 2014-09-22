@@ -192,7 +192,7 @@ public class TextProcessor {
 		try {
 
 			FileInputStream fstream = new FileInputStream(
-					SourceRetrievalConfig.getStopWordsPath());
+					"../LetoR/src/main/resources/EN_stopword.txt");
 			DataInputStream in = new DataInputStream(fstream);
 			BufferedReader br = new BufferedReader(new InputStreamReader(in,
 					"UTF8"));

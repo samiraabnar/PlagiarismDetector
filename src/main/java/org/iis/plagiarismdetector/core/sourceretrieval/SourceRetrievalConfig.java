@@ -15,7 +15,9 @@ public class SourceRetrievalConfig {
 
 	static {
 		try {
-			InputStream stream = new FileInputStream(new File("../PlagiarismDetector/src/main/resources/sourceRetrievalConfig.properties"));
+			File cConf = new File("sourceRetrievalConfig.properties");
+			System.out.println("Config File:"+ cConf.getAbsolutePath());
+			InputStream stream = new FileInputStream(cConf);
 			configFile.load(stream);
 
 		} catch (IOException e) {
