@@ -60,7 +60,7 @@ public class DocumentSentenceAsQuery extends DocumentAsQuery{
 					SourceRetrievalConfig.getK()); k++) {
 				results.get(qId)
 						.get(k)
-						.setScore(results.get(qId).get(k).getScore()
+						.setScore((double) (SourceRetrievalConfig.getK() - k)
 								);
 				if (qrMap.containsKey(results.get(qId).get(k).getDocumentId())) {
 
@@ -110,7 +110,7 @@ public class DocumentSentenceAsQuery extends DocumentAsQuery{
 	    	  
 	    	  if(sentenceString.split(" ").length > 5)
 	    	  {
-	    		  sentences.add(sentenceString);
+	    		  sentences.add(sentenceString.toLowerCase());
 	    		  sentenceString = "";
 	    	  }
 	      }

@@ -193,4 +193,15 @@ public class SourceRetrievalConfig {
 	public static String getDictionaryPath() {
 		return configFile.getProperty("dictionaryPath");
 	}
+
+
+	public static String getFeaturedIndexPath() {
+		if (configFile.getProperty("phase").equals("test")) {
+			return configFile.getProperty("testFeaturedIndexPath");
+			}
+			else
+			{
+				return configFile.getProperty("featuredIndexPath");
+			}
+	}
 }

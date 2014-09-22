@@ -10,6 +10,7 @@ import org.apache.lucene.analysis.core.LowerCaseFilter;
 import org.apache.lucene.analysis.core.SimpleAnalyzer;
 import org.apache.lucene.analysis.core.StopFilter;
 import org.apache.lucene.analysis.en.PorterStemFilter;
+import org.apache.lucene.analysis.miscellaneous.WordDelimiterFilter;
 import org.apache.lucene.analysis.standard.StandardAnalyzer;
 import org.apache.lucene.analysis.standard.StandardFilter;
 import org.apache.lucene.analysis.util.CharArraySet;
@@ -44,7 +45,67 @@ public class MyAnalyzer {
 		this.stopwordRemooving = false;
 		this.steming = steming;
 	}
+	
+	public Analyzer MyNamedEntityAnalyzer()
+	{
+		
+		return new AnalyzerWrapper() {
+			
+			 int wordDelimiterConfig = 
+			            WordDelimiterFilter.PRESERVE_ORIGINAL;
+			
+			@Override
+			protected Analyzer getWrappedAnalyzer(String string) {
+				return new StandardAnalyzer(Version.LUCENE_CURRENT);
+			}
 
+			@Override
+			protected Analyzer.TokenStreamComponents wrapComponents(
+					String fieldName, Analyzer.TokenStreamComponents tsc) {
+				TokenStream tokenStream = new WordDelimiterFilter( new StandardFilter(
+						Version.LUCENE_CURRENT, tsc.getTokenStream()), wordDelimiterConfig, null);
+
+				tokenStream = new LowerCaseFilter(Version.LUCENE_CURRENT,
+						tokenStream);
+			
+				return new StandardAnalyzer.TokenStreamComponents(
+						tsc.getTokenizer(), tokenStream);
+			}
+			
+		};
+	}
+
+
+	public Analyzer MyNgramEntityAnalyzer()
+	{
+		
+		return new AnalyzerWrapper() {
+			
+			 int wordDelimiterConfig = WordDelimiterFilter.GENERATE_WORD_PARTS; 
+			        
+			
+			@Override
+			protected Analyzer getWrappedAnalyzer(String string) {
+				return new StandardAnalyzer(Version.LUCENE_CURRENT);
+			}
+
+			@Override
+			protected Analyzer.TokenStreamComponents wrapComponents(
+					String fieldName, Analyzer.TokenStreamComponents tsc) {
+				TokenStream tokenStream = new WordDelimiterFilter( new StandardFilter(
+						Version.LUCENE_CURRENT, tsc.getTokenStream()), wordDelimiterConfig, null);
+
+				tokenStream = new LowerCaseFilter(Version.LUCENE_CURRENT,
+						tokenStream);
+			
+				return new StandardAnalyzer.TokenStreamComponents(
+						tsc.getTokenizer(), tokenStream);
+			}
+			
+		};
+	}
+
+	
 	public Analyzer MyEnglishAnalizer() {
 		if (steming && stopwordRemooving) {
 			return new AnalyzerWrapper() {
@@ -121,7 +182,6 @@ public class MyAnalyzer {
 			analyzer = new SimpleAnalyzer(Version.LUCENE_47);
 		}
 		return analyzer;
-
 	}
 
 }

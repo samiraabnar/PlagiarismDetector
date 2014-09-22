@@ -60,8 +60,8 @@ public class DocumentChunksAsQuery extends DocumentAsQuery {
 				results.get(qId)
 						.get(k)
 						.setScore(
-								(double) (Math.min(results.get(qId).size(),
-										SourceRetrievalConfig.getK()) - k));
+								(double) (
+										SourceRetrievalConfig.getK()- k));
 				if (qrMap.containsKey(results.get(qId).get(k).getDocumentId())) {
 
 					qrMap.get(results.get(qId).get(k).getDocumentId())
@@ -101,7 +101,7 @@ public class DocumentChunksAsQuery extends DocumentAsQuery {
 		if (suspFileText.length() == 0) {
 			System.out.println("Can not Read the File:" + suspFileName);
 		}
-		List<String> chunks = chunker.chunk(suspFileText);
+		List<String> chunks = chunker.chunk(suspFileText.toLowerCase());
 		int i = 0;
 		String queryId = suspFileName;
 		for (String chunk : chunks) {
