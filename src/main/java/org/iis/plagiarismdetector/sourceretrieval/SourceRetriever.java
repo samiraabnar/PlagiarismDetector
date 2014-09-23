@@ -47,7 +47,6 @@ public abstract class SourceRetriever {
     protected Retrieval retriever;
     protected IndexInfo suspIndexInfo;
 
-    protected Map<String, Integer> suspDocIndexedIdMap = new HashMap<String, Integer>();
 
     public void initialize(String collectionPath
     ) throws IOException {
@@ -55,10 +54,7 @@ public abstract class SourceRetriever {
         suspIndexInfo = new IndexInfo(IndexReader.open(new SimpleFSDirectory(
                 new File(SourceRetrievalConfig.getSuspIndexPath()))));
 
-        suspDocIndexedIdMap = new HashMap<String, Integer>();
-        for (int id = 0; id < suspIndexInfo.getIndexReader().numDocs(); id++) {
-            suspDocIndexedIdMap.put(suspIndexInfo.getIndexReader().document(id).get("DOCID"), id);
-        }
+      
     }
 
     public void pairToTrecJudgeFileFormatConvertor(String pairFileName,

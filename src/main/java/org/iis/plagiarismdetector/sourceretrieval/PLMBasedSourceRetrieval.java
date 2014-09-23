@@ -24,7 +24,6 @@ import org.iis.plagiarismdetector.classifiers.PlagiarismTypeDetector;
 
 import com.sun.tools.javac.util.Pair;
 
-import org.iis.plagiarismdetector.core.TextProcessor;
 import  org.iis.plagiarismdetector.core.lm.DirichletSmoothedLanguageModelbyLM;
 import  org.iis.plagiarismdetector.core.lm.LanguageModel;
 import  org.iis.plagiarismdetector.core.lm.LuceneBasedLanguageModel;
@@ -39,7 +38,6 @@ public class PLMBasedSourceRetrieval extends LMBasedSourceRetrieval {
 
 	private static final Integer EXPANSION_DEGREE = 1;
 	private static final Integer MAX_HITS = SourceRetrievalConfig.getK();
-	private static final Boolean REMOVE_STOPWORDS_QUERYTIME = false;
 	private static final boolean STOPWORDS_IN_QUERY = false;
 
 	private final Double MIU = 1000D;
@@ -49,8 +47,8 @@ public class PLMBasedSourceRetrieval extends LMBasedSourceRetrieval {
 	private LuceneIndex srcCollectionIndex;
 	LuceneBasedLanguageModel bgLM;
 
-	private String BG_COLLECTION = SourceRetrievalConfig.getSrcTrainCorpusPath();
-	private String BG_INDEX_PATH = SourceRetrievalConfig.getSrcTrainIndexPath();
+	private String BG_COLLECTION = SourceRetrievalConfig.getSrcCorpusPath();//SourceRetrievalConfig.getSrcTrainCorpusPath();
+	private String BG_INDEX_PATH = SourceRetrievalConfig.getSrcIndexPath();//SourceRetrievalConfig.getSrcTrainIndexPath();
 
 	private String SRC_COLLECTION = SourceRetrievalConfig.getSrcCorpusPath();
 	private String SRC_INDEX_PATH = SourceRetrievalConfig.getSrcIndexPath();
@@ -92,52 +90,7 @@ public class PLMBasedSourceRetrieval extends LMBasedSourceRetrieval {
 		}
 	}
 
-	private void testIndexLM() throws IOException,
-			ParserConfigurationException, SAXException, SQLException {
-		bgIndex = new LuceneIndex(BG_COLLECTION, LANGUAGE, BG_INDEX_PATH,
-				SourceRetrievalConfig.get("IF_STEM"), SourceRetrievalConfig.get("IF_REMOVE_STOPWORDS_INDEXTIME"));
-		bgIndex.loadIndex();
-		bgLM = new LuceneBasedLanguageModel(bgIndex);
-		srcCollectionIndex =  new LuceneIndex(SRC_COLLECTION, LANGUAGE, SRC_INDEX_PATH,
-				SourceRetrievalConfig.get("IF_STEM"), SourceRetrievalConfig.get("IF_REMOVE_STOPWORDS_INDEXTIME"));
-		List<Integer> documents = srcCollectionIndex.getDocumentIDz();
-		Map<String, Double> candidSourceCountSeenWords = srcCollectionIndex
-				.getDocumentTermFrequencies(documents.get(0));
-
-		DirichletSmoothedLanguageModelbyLM candidSourceLanguageModel = new DirichletSmoothedLanguageModelbyLM(
-				candidSourceCountSeenWords, MIU, bgLM);
-		candidSourceLanguageModel.setup();
-		System.out.println(candidSourceLanguageModel.getWordCount("andrew"));
-		System.out.println(candidSourceLanguageModel
-				.getMaximumLikelihoodProbability("andrew"));
-		System.out.println(bgLM.getMaximumLikelihoodProbability("andrew"));
-
-	}
-
-	public void testChunkLanguageModel(PLMBasedSourceRetrieval srcRetriever)
-			throws IOException, Exception {
-		List<String> chunks = new ArrayList<String>();
-		chunks.add("salam salam! hello! who are you? samira samira ! my name is samira... you are a black board. hi samira and black board!");
-		List<Pair<String, Pair<Integer, Integer>>> tokens = NGramExtractor
-				.getTokens(chunks.get(0),SourceRetrievalConfig.get("IF_STEM"), REMOVE_STOPWORDS_QUERYTIME);
-		List<Pair<String, Pair<Integer, Integer>>> nst = NGramExtractor
-				.getNonStopWordTokens(tokens, "EN");
-		List<Pair<Map<String, NGramFeature>, Integer>> lm = srcRetriever
-				.extractChunksNGrams(1, chunks);
-		List<Pair<Map<String, NGramFeature>, Integer>> f = new ArrayList<Pair<Map<String, NGramFeature>, Integer>>();
-		LanguageModel mm = srcRetriever.computeChunkLanguageModel(f, lm.get(0),
-				f, 0L, (long) chunks.get(0).length(), null);
-
-		System.out.println(mm.getMaximumLikelihoodProbability("samira"));
-		System.out.println(4D / nst.size());
-	}
-
-	public void index() throws IOException, ParserConfigurationException,
-			SAXException, SQLException {
-		bgIndex = new LuceneIndex(BG_COLLECTION, LANGUAGE, BG_INDEX_PATH,
-				SourceRetrievalConfig.get("IF_STEM"), SourceRetrievalConfig.get("IF_REMOVE_STOPWORDS_INDEXTIME"));
-		bgIndex.index();
-	}
+	
 
 	public void run() throws Exception {
 
@@ -147,14 +100,15 @@ public class PLMBasedSourceRetrieval extends LMBasedSourceRetrieval {
 		bgIndex.loadIndex();
 
 		bgLM = new LuceneBasedLanguageModel(bgIndex);
-		srcCollectionIndex = 
+		/*srcCollectionIndex = 
 									  new LuceneIndex(SRC_COLLECTION, LANGUAGE,
 									  SRC_INDEX_PATH, SourceRetrievalConfig.get("IF_STEM"),
 									  SourceRetrievalConfig.get("IF_REMOVE_STOPWORDS"));
 									 
 		
 		srcCollectionIndex.loadIndex();
-		 
+		 */
+                srcCollectionIndex = bgIndex;
 		initialize(SRC_INDEX_PATH);
 
 		List<Integer> documents = srcCollectionIndex.getDocumentIDz();
@@ -166,24 +120,15 @@ public class PLMBasedSourceRetrieval extends LMBasedSourceRetrieval {
 			sourceLMz.put(docId, candidSourceLanguageModel);
 		}
 
-		File suspDir = new File(SUSP_DIR);
-		for (File suspFile : suspDir.listFiles(new FilenameFilter() {
-
-			@Override
-			public boolean accept(File dir, String name) {
-				return name.endsWith(".txt") && (!name.startsWith("."));
-			}
-		})) {
-			String documentText = suspIndexInfo.getIndexReader().document(suspDocIndexedIdMap.get(suspFile.getName().replaceAll(".txt", ""))).get("TEXT");//TextProcessor.getMatn(suspFile).toLowerCase();
-			retrieveSources(documentText, suspFile.getName());
+		for (int i=0; i < suspIndexInfo.getIndexReader().numDocs(); i++) {
+			String documentText = suspIndexInfo.getIndexReader().document(i).get("TEXT");//TextProcessor.getMatn(suspFile).toLowerCase();
+			retrieveSources(documentText, suspIndexInfo.getIndexReader().document(i).get("DOCID"));
 		}
 	}
 
 	private void retrieveSources(String documentText, String suspFileName)
 			throws Exception {
-		suspFileName = suspFileName.contains("/") ? suspFileName.substring(
-				suspFileName.lastIndexOf("/") + 1).replace(".txt", "")
-				: suspFileName.replace(".txt", "");
+		
 		Chunker chunker = new SimpleNonOverlappingChuker();
 		List<String> chunks = chunker.chunk(documentText);
 		List<LanguageModel> chunkLanguageModels = computeLanguageModelsForChunks(
@@ -193,7 +138,7 @@ public class PLMBasedSourceRetrieval extends LMBasedSourceRetrieval {
 		Map<String, QueryResult> qrMap = new HashMap<String, QueryResult>();
 		for (int i = 0; i < chunkLanguageModels.size(); i++) {
 			List<Pair<Object, Double>> sourceDocuments = getRelatedSources(
-					documentText, suspFileName, chunkLanguageModels.get(i),
+					chunkLanguageModels.get(i),
 					docIdz);
 
 			for (int k = 0; k < sourceDocuments.size(); k++) {
@@ -275,20 +220,15 @@ public class PLMBasedSourceRetrieval extends LMBasedSourceRetrieval {
 		return indx;
 	}
 
-	private List<Pair<Object, Double>> getRelatedSources(String suspFileText,
-			String suspFileName, LanguageModel languageModel,
+	private List<Pair<Object, Double>> getRelatedSources(
+			LanguageModel languageModel,
 			Set<Integer> srcCandidz) throws IOException, ParseException {
 
 		List<Pair<Object, Double>> similarityScores = new ArrayList<Pair<Object, Double>>();
 
-		/*
-		 * Set<Integer> docIdz = new HashSet<Integer>(); for (String seenTerm :
-		 * languageModel.getWordsCount().keySet()) {
-		 * docIdz.addAll(collectionIndex.getDocumentsContainingTerm(seenTerm));
-		 * }
-		 */
+		
 
-		for (Integer docId : srcCandidz/* sourceLMz.keySet() */) {
+		for (Integer docId : srcCandidz) {
 			Double similarityScore = sourceLMz.get(docId).compareTo(
 					languageModel);
 			similarityScores.add(new Pair<Object, Double>(docId,

@@ -75,37 +75,9 @@ public class MyAnalyzer {
 	}
 
 	
-	public Analyzer MyNamedEntityAnalyzer()
-	{
-		
-		return new AnalyzerWrapper() {
-			
-			 int wordDelimiterConfig = 
-			            WordDelimiterFilter.PRESERVE_ORIGINAL;
-			
-			@Override
-			protected Analyzer getWrappedAnalyzer(String string) {
-				return new SimpleAnalyzer(Version.LUCENE_CURRENT);
-			}
+	
 
-			@Override
-			protected Analyzer.TokenStreamComponents wrapComponents(
-					String fieldName, Analyzer.TokenStreamComponents tsc) {
-                                TokenStream tokenStream
-				 = new WordDelimiterFilter( tsc.getTokenStream(), wordDelimiterConfig, null);
-
-				tokenStream = new LowerCaseFilter(Version.LUCENE_CURRENT,
-						tokenStream);
-			
-				return new SimpleAnalyzer.TokenStreamComponents(
-						tsc.getTokenizer(), tokenStream);
-			}
-			
-		};
-	}
-
-
-	public Analyzer MyNgramEntityAnalyzer()
+	public Analyzer MyNgramAnalyzer()
 	{
 		
 		return new AnalyzerWrapper() {
@@ -115,7 +87,7 @@ public class MyAnalyzer {
 			
 			@Override
 			protected Analyzer getWrappedAnalyzer(String string) {
-				return new SimpleAnalyzer(Version.LUCENE_CURRENT);
+				return new StandardAnalyzer(Version.LUCENE_CURRENT);
 			}
 
 			@Override
@@ -127,7 +99,7 @@ public class MyAnalyzer {
 				tokenStream = new LowerCaseFilter(Version.LUCENE_CURRENT,
 						tokenStream);
 			
-				return new SimpleAnalyzer.TokenStreamComponents(
+				return new StandardAnalyzer.TokenStreamComponents(
 						tsc.getTokenizer(), tokenStream);
 			}
 			

@@ -1,17 +1,11 @@
 package org.iis.plagiarismdetector.sourceretrieval;
 
 import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 import com.sun.tools.javac.util.Pair;
 
 import org.iis.plagiarismdetector.core.TextProcessor;
-import org.iis.plagiarismdetector.core.sourceretrieval.QueryResult;
-import org.iis.plagiarismdetector.core.sourceretrieval.SourceRetrievalConfig;
 import org.iis.plagiarismdetector.core.textchunker.Chunker;
 import org.iis.plagiarismdetector.core.textchunker.SimpleNonOverlappingChuker;
 

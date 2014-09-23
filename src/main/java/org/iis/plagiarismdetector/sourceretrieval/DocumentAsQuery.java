@@ -39,35 +39,7 @@ public class DocumentAsQuery extends SourceRetriever {
 		}
 	}
 
-	protected List<QueryResult> mergeDifferentQueriesResults(
-			Map<String, List<QueryResult>> results) {
-		List<QueryResult> queryResult = new ArrayList<QueryResult>();
-
-		for (String qId : results.keySet()) {
-			Collections.sort(results.get(qId), new Comparator<QueryResult>() {
-
-				@Override
-				public int compare(QueryResult o1, QueryResult o2) {
-					return o1.getScore().compareTo(o2.getScore());
-				}
-
-			});
-			queryResult.addAll(results.get(qId).subList(
-					0,
-					Math.min(SourceRetrievalConfig.getK(), results.get(qId)
-							.size())));
-		}
-
-		Collections.sort(queryResult, new Comparator<QueryResult>() {
-
-			@Override
-			public int compare(QueryResult o1, QueryResult o2) {
-				return o1.getScore().compareTo(o2.getScore());
-			}
-
-		});
-		return queryResult;
-	}
+	
 
 	@Override
 	protected List<Pair<String, String>> extractQueries(String suspFileName,
