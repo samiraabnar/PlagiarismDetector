@@ -251,7 +251,7 @@ public class PLMBasedSourceRetrieval extends LMBasedSourceRetrieval {
 
 		if (similarityScores.size() == 0)
 			return similarityScores;
-		int index = getIndexOfMaxDiff(similarityScores);
+		int index = Math.min(similarityScores.size(), SourceRetrievalConfig.getK());// getIndexOfMaxDiff(similarityScores);
 		/*if (index > 5)
 			index = 0;
 */
