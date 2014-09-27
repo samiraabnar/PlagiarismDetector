@@ -7,6 +7,7 @@ import java.util.List;
 import java.util.Map;
 
 import com.sun.tools.javac.util.Pair;
+import java.util.Set;
 
 import org.iis.plagiarismdetector.core.TextProcessor;
 import org.iis.plagiarismdetector.core.sourceretrieval.QueryResult;
@@ -39,17 +40,21 @@ public class DocumentAsQuery extends SourceRetriever {
 		}
 	}
 
-	
+
 
 	@Override
 	protected List<Pair<String, String>> extractQueries(String suspFileName,
 			String suspFileText) {
 		List<Pair<String, String>> queries = new ArrayList<Pair<String, String>>();
 		suspFileText = TextProcessor.removeAllKindsOfPunctuations(suspFileText);
+                suspFileText = suspFileText.toLowerCase();
+                for(String stopword : mostFrequentWords)
+                {
+                    suspFileText = suspFileText.replaceAll(stopword, "");
+                }
 		if (suspFileText.length() == 0) {
 			System.out.println("Can not Read the File:" + suspFileName);
 		}
-
 		String queryId = suspFileName;
 		queries.add(new Pair<String, String>(suspFileText.substring(0,
 				suspFileText.length() - 1), queryId));

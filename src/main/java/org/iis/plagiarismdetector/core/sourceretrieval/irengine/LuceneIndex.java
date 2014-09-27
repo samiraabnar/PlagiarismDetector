@@ -254,11 +254,11 @@ public class LuceneIndex {
 		return ir.document(fst).get("DOCID");
 	}
 
-	public List<Integer> getDocumentsContainingTerm(String term)
+	public Set<Integer> getDocumentsContainingTerm(String term)
 			throws IOException {
 		DocsEnum de = MultiFields.getTermDocsEnum(ir,
 				MultiFields.getLiveDocs(ir), "TEXT", new BytesRef(term));
-		List<Integer> docIdz = new ArrayList<Integer>();
+		Set<Integer> docIdz = new HashSet<Integer>();
 		if (de == null)
 			return docIdz;
 		int doc;

@@ -46,6 +46,7 @@ public abstract class SourceRetriever {
     private Map<String, List<QueryResult>> FinalResults = new HashMap<String, List<QueryResult>>();
     protected Retrieval retriever;
     protected IndexInfo suspIndexInfo;
+    protected IndexInfo srcIndexInfo;
 
 
     public void initialize(String collectionPath
@@ -53,7 +54,8 @@ public abstract class SourceRetriever {
         retriever = new Retrieval(collectionPath);
         suspIndexInfo = new IndexInfo(IndexReader.open(new SimpleFSDirectory(
                 new File(SourceRetrievalConfig.getSuspIndexPath()))));
-
+        srcIndexInfo = new IndexInfo(IndexReader.open(new SimpleFSDirectory(
+                new File(SourceRetrievalConfig.getSrcIndexPath()))));
       
     }
 
@@ -111,12 +113,16 @@ public abstract class SourceRetriever {
                 + " as similarity function", false/* if reindex */);
     }
 
+    static List<String> mostFrequentWords;
+
     public void doTheExperiment(Integer expNo,
             Map<String, Object> experimentOptions,
             String experimentDescription, boolean reIndex) throws Exception {
         try {
 
             initialize(SourceRetrievalConfig.getSrcIndexPath());
+            mostFrequentWords = srcIndexInfo.getTopTerms_DF("TEXT", 100);
+
             retrieve(expNo, experimentOptions, experimentDescription);
 
         } catch (IOException e) {
@@ -351,7 +357,7 @@ public abstract class SourceRetriever {
             }
 
         });
-        queryResult.subList(0, Math.min(queryResult.size(), SourceRetrievalConfig.getK()));
+        queryResult = queryResult.subList(0, Math.min(queryResult.size(), SourceRetrievalConfig.getK()));
         System.out.println(suspFileName + ": " + queryResult.size());
         reportInTREC(queryResult, suspFileName.substring(suspFileName.indexOf("-")+1));
         getFinalResults().put(suspFileName, queryResult);
@@ -382,10 +388,10 @@ public abstract class SourceRetriever {
         if (similarityScores.isEmpty()) {
             return similarityScores;
         }
-        int index = getIndexOfMaxDiff(similarityScores);
+        int index = Math.min(similarityScores.size(), SourceRetrievalConfig.getK());/*getIndexOfMaxDiff(similarityScores);
         if (index > 5) {
             index = 0;
-        }
+        }*/
 
         return similarityScores.subList(0, index);
     }

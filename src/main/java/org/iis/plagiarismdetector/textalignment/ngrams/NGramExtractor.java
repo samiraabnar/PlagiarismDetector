@@ -325,6 +325,21 @@ public class NGramExtractor {
 		return stopwordlessTokens;
 	}
 
+        
+        public static List<Pair<String, Pair<Integer, Integer>>> getNonStopWordTokens(
+			List<Pair<String, Pair<Integer, Integer>>> tokens, List<String> stopwords)
+			throws IOException, Exception {
+
+		List<Pair<String, Pair<Integer, Integer>>> stopwordlessTokens = new ArrayList<Pair<String, Pair<Integer, Integer>>>();
+		for (Pair<String, Pair<Integer, Integer>> token : tokens) {
+			if (!stopwords.contains(token.fst)) {
+				stopwordlessTokens.add(token);
+			}
+		}
+
+		return stopwordlessTokens;
+	}
+
 	/*
 	 * public static List<NGramFeature> extractSegmentOneGrams(String text, Long
 	 * documentId, Pair<Integer, Integer> segmentRange, NGramType ngramType) {

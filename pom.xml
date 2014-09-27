@@ -131,7 +131,7 @@
                     <archive>
                         <manifest>
                             <mainClass>
-                                org.iis.plagiarismdetector.sourceretrieval.DocumentChunkAsQuery
+                                org.iis.plagiarismdetector.sourceretrieval.PLMBasedSourceRetrieval
                             </mainClass>
                         </manifest>
                     </archive>

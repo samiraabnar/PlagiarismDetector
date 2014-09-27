@@ -68,7 +68,7 @@ public class LMBasedSourceRetrieval extends SourceRetriever {
 	Map<Integer, LanguageModel> sourceLMz = new HashMap<Integer, LanguageModel>();
 	//public PlagiarismTypeDetector pdt = new PlagiarismTypeDetector();
 
-	public LMBasedSourceRetrieval() throws ClassNotFoundException, IOException {
+	public LMBasedSourceRetrieval()  throws IOException {
 	
 		//pdt.initalizeClassifier();
 		initialize(BG_INDEX_PATH);

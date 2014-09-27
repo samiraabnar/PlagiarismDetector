@@ -19,7 +19,7 @@ public class SimpleNonOverlappingChuker extends Chunker {
 		for (String sentence : sentences) {
 			chunks.set(chunks.size() - 1, chunks.get(chunks.size() - 1)
 					+ sentence);
-			if (chunks.get(chunks.size() - 1).length() >= CHUNK_WORDS_LIMIT) {
+			if (chunks.get(chunks.size() - 1).split("\\s+").length >= CHUNK_WORDS_LIMIT) {
 				chunks.add(new String(""));
 			}
 		}

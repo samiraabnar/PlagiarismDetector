@@ -1,9 +1,6 @@
 package org.iis.plagiarismdetector.sourceretrieval;
 
-import java.io.File;
-import java.io.FilenameFilter;
 import java.io.IOException;
-import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
@@ -13,10 +10,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import javax.xml.parsers.ParserConfigurationException;
 
 import org.apache.lucene.queryparser.classic.ParseException;
-import org.xml.sax.SAXException;
 import  org.iis.plagiarismdetector.textalignment.ngrams.NGramExtractor;
 import org.iis.plagiarismdetector.textalignment.ngrams.NGramFeature;
 import  org.iis.plagiarismdetector.textalignment.ngrams.NGramType;
@@ -28,6 +23,7 @@ import  org.iis.plagiarismdetector.core.lm.DirichletSmoothedLanguageModelbyLM;
 import  org.iis.plagiarismdetector.core.lm.LanguageModel;
 import  org.iis.plagiarismdetector.core.lm.LuceneBasedLanguageModel;
 import  org.iis.plagiarismdetector.core.lm.NotSmoothedLanguageModel;
+import org.iis.plagiarismdetector.core.lucene.IndexInfo;
 import org.iis.plagiarismdetector.core.sourceretrieval.QueryResult;
 import org.iis.plagiarismdetector.core.sourceretrieval.SourceRetrievalConfig;
 import org.iis.plagiarismdetector.core.sourceretrieval.irengine.LuceneIndex;
@@ -60,10 +56,12 @@ public class PLMBasedSourceRetrieval extends LMBasedSourceRetrieval {
 	Map<Integer, LanguageModel> sourceLMz = new HashMap<Integer, LanguageModel>();
 
 	public PlagiarismTypeDetector pdt = new PlagiarismTypeDetector();
+        IndexInfo srcIndexInfo;
 
-	public PLMBasedSourceRetrieval() throws ClassNotFoundException, IOException {
-	
-	}
+	public PLMBasedSourceRetrieval() throws IOException
+        {
+            super();
+        }
 
 	/**
 	 * @param args
@@ -110,6 +108,7 @@ public class PLMBasedSourceRetrieval extends LMBasedSourceRetrieval {
 		 */
                 srcCollectionIndex = bgIndex;
 		initialize(SRC_INDEX_PATH);
+                srcIndexInfo = new IndexInfo(srcCollectionIndex.getIndexReader());
 
 		List<Integer> documents = srcCollectionIndex.getDocumentIDz();
 		for (Integer docId : documents) {
@@ -133,13 +132,13 @@ public class PLMBasedSourceRetrieval extends LMBasedSourceRetrieval {
 		List<String> chunks = chunker.chunk(documentText);
 		List<LanguageModel> chunkLanguageModels = computeLanguageModelsForChunks(
 				chunks, N);
-		Set<Integer> docIdz = getSelectedSources(documentText, suspFileName);
+		//Set<Integer> docIdz = getSelectedSources(documentText, suspFileName);
 
 		Map<String, QueryResult> qrMap = new HashMap<String, QueryResult>();
 		for (int i = 0; i < chunkLanguageModels.size(); i++) {
 			List<Pair<Object, Double>> sourceDocuments = getRelatedSources(
 					chunkLanguageModels.get(i),
-					docIdz);
+					sourceLMz.keySet());
 
 			for (int k = 0; k < sourceDocuments.size(); k++) {
 
@@ -197,10 +196,10 @@ public class PLMBasedSourceRetrieval extends LMBasedSourceRetrieval {
 			}
 
 		});
-		queryResult.subList(0, Math.min(queryResult.size(),SourceRetrievalConfig.getK()));
+	//	queryResult = queryResult.subList(0, Math.min(queryResult.size(),SourceRetrievalConfig.getK()));
 		System.out.println(suspFileName + ": " + queryResult.size());
-		reportInTREC(queryResult, suspFileName);
-		getFinalResults().put(suspFileName, queryResult);
+		reportInTREC(queryResult, suspFileName.substring(suspFileName.indexOf("-")+1));
+		getFinalResults().put(suspFileName.substring(suspFileName.indexOf("-")+1), queryResult);
 	}
 
 	private int getIndexOfMaxDiffOfQueryResults(List<QueryResult> queryResult) {
@@ -226,9 +225,14 @@ public class PLMBasedSourceRetrieval extends LMBasedSourceRetrieval {
 
 		List<Pair<Object, Double>> similarityScores = new ArrayList<Pair<Object, Double>>();
 
-		
+		Set<Integer> searchSpace = new HashSet<Integer>();
+                
+                for(String word: languageModel.getWordsCount().keySet())
+                {
+                   searchSpace.addAll(srcCollectionIndex.getDocumentsContainingTerm(word));
+                }
 
-		for (Integer docId : srcCandidz) {
+		for (Integer docId : searchSpace) {
 			Double similarityScore = sourceLMz.get(docId).compareTo(
 					languageModel);
 			similarityScores.add(new Pair<Object, Double>(docId,
@@ -248,9 +252,9 @@ public class PLMBasedSourceRetrieval extends LMBasedSourceRetrieval {
 		if (similarityScores.size() == 0)
 			return similarityScores;
 		int index = getIndexOfMaxDiff(similarityScores);
-		if (index > 5)
+		/*if (index > 5)
 			index = 0;
-
+*/
 		return similarityScores.subList(0, index);
 
 		/*
@@ -261,7 +265,6 @@ public class PLMBasedSourceRetrieval extends LMBasedSourceRetrieval {
 
 	private Set<Integer> getSelectedSources(String suspFileText,
 			String suspFileName) throws IOException, ParseException {
-		// TODO Auto-generated method stub
 		List<QueryResult> results = new ArrayList<QueryResult>();
 
 		results = submitQuery(suspFileText, suspFileName,100);
@@ -460,7 +463,7 @@ public class PLMBasedSourceRetrieval extends LMBasedSourceRetrieval {
 			List<Pair<String, Pair<Integer, Integer>>> tokens = NGramExtractor
 					.getTokens(chunkString, SourceRetrievalConfig.get("IF_STEM"), SourceRetrievalConfig.get("REMOVE_STOPWORDS_QUERYTIME"));
 			List<Pair<String, Pair<Integer, Integer>>> stopwordlessTokens = NGramExtractor
-					.getNonStopWordTokens(tokens, LANGUAGE);
+					.getNonStopWordTokens(tokens, srcIndexInfo.getTopTerms_DF("TEXT", 100) );
 			Map<String, NGramFeature> chunkNGrams = NGramExtractor
 					.extractSegmentNonStopWordNGrams(
 							N,

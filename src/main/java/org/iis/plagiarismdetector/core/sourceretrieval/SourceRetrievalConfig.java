@@ -15,7 +15,7 @@ public class SourceRetrievalConfig {
 
 	static {
 		try {
-			File cConf = new File("sourceRetrievalConfig_DCQ.properties");
+			File cConf = new File("sourceRetrievalConfig.properties");
 			System.out.println("Config File:"+ cConf.getAbsolutePath());
 			InputStream stream = new FileInputStream(cConf);
 			configFile.load(stream);
@@ -194,16 +194,5 @@ public class SourceRetrievalConfig {
 
 	public static String getDictionaryPath() {
 		return configFile.getProperty("dictionaryPath");
-	}
-
-
-	public static String getFeaturedIndexPath() {
-		if (configFile.getProperty("phase").equals("test")) {
-			return configFile.getProperty("testFeaturedIndexPath");
-			}
-			else
-			{
-				return configFile.getProperty("featuredIndexPath");
-			}
 	}
 }

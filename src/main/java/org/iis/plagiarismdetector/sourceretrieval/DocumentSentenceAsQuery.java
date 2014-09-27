@@ -44,56 +44,6 @@ public class DocumentSentenceAsQuery extends DocumentAsQuery{
 		}
 	}
 
-	protected List<QueryResult> mergeDifferentQueriesResults(
-			Map<String, List<QueryResult>> results) {
-
-		Map<String, QueryResult> qrMap = new HashMap<String, QueryResult>();
-		for (String qId : results.keySet()) {
-			Collections.sort(results.get(qId), new Comparator<QueryResult>() {
-
-				@Override
-				public int compare(QueryResult o1, QueryResult o2) {
-					return o2.getScore().compareTo(o1.getScore());
-				}
-
-			});
-
-			for (int k = 0; k < Math.min(results.get(qId).size(),
-					SourceRetrievalConfig.getK()); k++) {
-				results.get(qId)
-						.get(k)
-						.setScore((double) (SourceRetrievalConfig.getK() - k)
-								);
-				if (qrMap.containsKey(results.get(qId).get(k).getDocumentId())) {
-
-					qrMap.get(results.get(qId).get(k).getDocumentId())
-							.setScore(
-									results.get(qId).get(k).getScore()
-											+ qrMap.get(
-													results.get(qId).get(k)
-															.getDocumentId())
-													.getScore());
-				} else {
-					qrMap.put(results.get(qId).get(k).getDocumentId(), results
-							.get(qId).get(k));
-				}
-			}
-
-		}
-		List<QueryResult> queryResult = new ArrayList<QueryResult>(
-				qrMap.values());
-
-		Collections.sort(queryResult, new Comparator<QueryResult>() {
-
-			@Override
-			public int compare(QueryResult o1, QueryResult o2) {
-				return o2.getScore().compareTo(o1.getScore());
-			}
-
-		});
-		return queryResult.subList(0, SourceRetrievalConfig.getK());
-	}
-
 	@Override
 	protected List<Pair<String, String>> extractQueries(String suspFileName,
 			String suspFileText) {

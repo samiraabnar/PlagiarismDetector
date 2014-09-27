@@ -69,13 +69,16 @@ public class Retrieval {
 	}
 
 	public List<QueryResult> searchAndReturnResults(String query, String qID, Integer k)
-			throws IOException, ParseException {
+			throws IOException {
 
+                try
+                {
 		QueryParser qParser = new QueryParser(Version.LUCENE_47, "TEXT",
 				getAnalayzer(SourceRetrievalConfig.getLanguage()));
+              
 		BooleanQuery.setMaxClauseCount(query.split("[\\s\\-_]+").length);
 		Query q = qParser.parse(QueryParser.escape(query));
-
+ 
 		Similarity simFunction = SIM_FUNCS[SourceRetrievalConfig.getSimilarityFunction().ordinal()];
 		IndexSearcher isearcher = new IndexSearcher(ireader);
 		isearcher.setSimilarity(simFunction);
@@ -86,6 +89,14 @@ public class Retrieval {
 		ScoreDoc[] hits = results.scoreDocs;
 
 		return fillQueryResultList(hits, qID, q);
+                 }
+                catch(ParseException pe)
+                {
+                  pe.printStackTrace();
+                  System.err.println("Exceptional Query: " + qID);
+                }
+                
+                return new ArrayList<QueryResult>();
 
 	}
 
